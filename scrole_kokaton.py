@@ -13,11 +13,9 @@ HEIGHT = 750  # ゲームウィンドウの高さ
 # WIDTH = 700
 # HEIGHT = 500
 MAIN_DIR = os.path.split(os.path.abspath(__file__))[0]
-MV_FIELD = False
-MV_JUMP = False
-MV_MOVE = False
-SOKO = 0
-COUNT = 0
+MV_FIELD = False# スクロールの許可
+MV_MOVE = False # 移動の許可
+FLY_COUNT = 0 # 飛翔時間のカウント
 
 
 def check_bound(obj: pg.Rect) -> tuple[bool, bool]:
@@ -29,7 +27,7 @@ def check_bound(obj: pg.Rect) -> tuple[bool, bool]:
     yoko, tate = True, True
     if obj.left < 0 or WIDTH < obj.right:  # 横方向のはみ出し判定
         yoko = False
-    if obj.top < 0 or HEIGHT + SOKO < obj.bottom:  # 縦方向のはみ出し判定
+    if obj.top < 0 or HEIGHT < obj.bottom:  # 縦方向のはみ出し判定
         tate = False
     return yoko, tate
 
@@ -97,7 +95,7 @@ class Bird(pg.sprite.Sprite):
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
-        global MV_FIELD,COUNT,MV_MOVE
+        global MV_FIELD,FLY_COUNT,MV_MOVE
         sum_mv = [0, 0]
         moto_center = self.rect.center
         for k, mv in __class__.delta.items():
@@ -106,12 +104,12 @@ class Bird(pg.sprite.Sprite):
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
                 if k == pg.K_UP:
-                    COUNT += 1
-                    if 20 <= COUNT < 35:
+                    FLY_COUNT += 1
+                    if 20 <= FLY_COUNT < 35:
                         self.rect.move_ip(-self.speed*mv[0], -self.speed*mv[1])
                         MV_MOVE = False
-                    elif 35 <= COUNT:
-                        COUNT = 0
+                    elif 35 <= FLY_COUNT:
+                        FLY_COUNT = 0
         self.rect.move_ip(0,2)
         if check_bound(self.rect) != (True, True):
             for k, mv in __class__.delta.items():
@@ -276,28 +274,32 @@ class Field(pg.sprite.Sprite):
     """
     足場に関するクラス
     """
-    def __init__(self,left_L = 100,top_L = HEIGHT-50,yoko = 50,tate = 50):
+    def __init__(self,left_L = 100,top_L = HEIGHT-50,yoko = 50,tate = 50, color = (0,0,255)):
+        """
+        足場のsurfaceを作る関数
+        引数：top_L(左上地点x座標),left_L(左上地点y座標),yoko(長さ),tate(高さ)
+        """
         super().__init__()
         self.left = left_L
         self.top = top_L
         self.image = pg.Surface((yoko,tate))
-        pg.draw.rect(self.image, (255,0,0),(0,0,yoko,tate))
+        pg.draw.rect(self.image, color,(0,0,yoko,tate))
         self.rect = self.image.get_rect()
-        self.rect.centerx = left_L
+        self.rect.centerx = left_L 
         self.rect.centery = top_L
 
     def update(self):
         """
         足場の移動と消去の更新に関する関数
         """
-        if MV_FIELD == True:
+        if MV_FIELD == True: # フィールドが動いているならオブジェクトを移動させる
             self.rect.move_ip(-5,0)
-        if self.rect.right < 0:
+        if self.rect.right < 0: # 画面外に出たら消去
             self.kill()
 
 
 def main():
-    global MV_FIELD,SOKO,MV_JUMP,MV_MOVE
+    global MV_FIELD,MV_MOVE
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
@@ -312,6 +314,9 @@ def main():
     Goal = pg.sprite.Group()
     Goal.add(Field(2500,0,20,HEIGHT))
     fields.add(Field())
+    Death_fields = pg.sprite.Group()
+    Death_fields.add(Field(100,HEIGHT-50,50,50,(255,0,0)))
+    # fields.add(Field())
     fields.add(Field(0,HEIGHT-20,1000,20))
     fields.add(Field(1200,HEIGHT-20,200,20))
     fields.add(Field(1000,HEIGHT/2))
@@ -355,14 +360,14 @@ def main():
         if pg.sprite.spritecollide(bird,fields,False):
             cc = pg.sprite.spritecollideany(bird,fields)
             print(cc.rect.center)
-            if cc.rect.centery+20 <= bird.rect.top <= cc.rect.bottom:
-                bird.rect.move_ip(0,10)
-            if cc.rect.top <= bird.rect.bottom <= cc.rect.centery+20:
-                bird.rect.move_ip(0,-12)
-            bird.rect.move_ip(0,-2)
+            if cc.rect.centery+20 <= bird.rect.top <= cc.rect.bottom:#フィールドオブジェクトの上面判定
+                bird.rect.move_ip(0,10) # 物体に対する反発
+            if cc.rect.top <= bird.rect.bottom <= cc.rect.centery+20:#フィールドオブジェクトの下面判定
+                bird.rect.move_ip(0,-12) # 物体に対する反発
+            bird.rect.move_ip(0,-2) # 重力付与
             MV_MOVE = True
 
-        if bird.rect.top < 1 or HEIGHT -1 < bird.rect.bottom:
+        if bird.rect.top < 1 or HEIGHT -1 < bird.rect.bottom: # 上下画面外判定
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
             pg.display.update()
@@ -371,6 +376,8 @@ def main():
         
         if len(pg.sprite.spritecollide(bird,Goal,False)) != 0:
             bird.change_img(6, screen) # こうかとん嬉しいエフェクト
+        if pg.sprite.spritecollide(bird,Death_fields,True):
+            bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
             pg.display.update()
             time.sleep(2)
@@ -389,6 +396,8 @@ def main():
         Goal.draw(screen)
         fields.update()
         fields.draw(screen)
+        Death_fields.update()
+        Death_fields.draw(screen)
         score.update(screen)
         pg.display.update()
         MV_FIELD = False
