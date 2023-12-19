@@ -229,15 +229,18 @@ class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
-    imgs = [pg.image.load(f"{MAIN_DIR}/fig/alien{i}.png") for i in range(1, 4)]
-    
+    #imgs = [pg.image.load(f"{MAIN_DIR}/fig/alien{i}.png") for i in range(1, 4)]
+    img = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/ghost.png"), 0, 0.3)
     def __init__(self):
         super().__init__()
-        self.image = random.choice(__class__.imgs)
+        # self.image = random.choice(__class__.imgs)
+        self.image = __class__.img
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), 0
+        self.rect.center = random.randint(700, WIDTH), 100
         self.vy = +6
-        self.bound = random.randint(50, HEIGHT/2)  # 停止位置
+        #self.vx = -6
+        self.bound_x = random.randint(70, WIDTH/2)
+        self.bound_y = random.randint(10, HEIGHT/2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
 
@@ -247,10 +250,14 @@ class Enemy(pg.sprite.Sprite):
         ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
         引数 screen：画面Surface
         """
-        if self.rect.centery > self.bound:
+        if self.rect.centery > self.bound_y:
             self.vy = 0
             self.state = "stop"
         self.rect.centery += self.vy
+        #if self.rect.centery > self.bound_x:
+            #self.vx = 0
+            #self.state = "stop"
+        #self.rect.centery += self.vx
 
 
 class Score:
@@ -304,10 +311,10 @@ def main():
     score = Score()
 
     bird = Bird(3, (50, 50))
-    # bombs = pg.sprite.Group()
-    # beams = pg.sprite.Group()
-    # exps = pg.sprite.Group()
-    # emys = pg.sprite.Group()
+    bombs = pg.sprite.Group()
+    beams = pg.sprite.Group()
+    exps = pg.sprite.Group()
+    emys = pg.sprite.Group()
     fields = pg.sprite.Group()
     fields.add(Field())
     fields.add(Field(0,HEIGHT-20,1000,20))
@@ -321,34 +328,34 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
-            # if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-            #     beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                beams.add(Beam(bird))
 
         screen.blit(bg_img, [0, 0])
 
-        # if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-        #     emys.add(Enemy())
+        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy())
 
-        # for emy in emys:
-        #     if emy.state == "stop" and tmr%emy.interval == 0:
-        #         # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-        #         bombs.add(Bomb(emy, bird))
+        for emy in emys:
+             if emy.state == "stop" and tmr%emy.interval == 0:
+        # #         # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
+                 bombs.add(Bomb(emy, bird))
 
-        # for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
-        #     exps.add(Explosion(emy, 100))  # 爆発エフェクト
-        #     score.value += 10  # 10点アップ
-        #     bird.change_img(6, screen)  # こうかとん喜びエフェクト
+        for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
+            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            score.value += 10  # 10点アップ
+            bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
-        # for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
-        #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-        #     score.value += 1  # 1点アップ
+        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.value += 1  # 1点アップ
 
-        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
-        #     score.update(screen)
-        #     pg.display.update()
-        #     time.sleep(2)
-        #     return
+        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+            score.update(screen)
+            pg.display.update()
+            time.sleep(2)
+            return
 
         if pg.sprite.spritecollide(bird,fields,False):
             cc = pg.sprite.spritecollideany(bird,fields)
@@ -368,12 +375,12 @@ def main():
             return
 
         bird.update(key_lst, screen)
-        # beams.update()
-        # beams.draw(screen)
-        # emys.update()
-        # emys.draw(screen)
-        # bombs.update()
-        # bombs.draw(screen)
+        beams.update()
+        beams.draw(screen)
+        emys.update()
+        emys.draw(screen)
+        bombs.update()
+        bombs.draw(screen)
         # exps.update()
         # exps.draw(screen)
         fields.update()
