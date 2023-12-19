@@ -357,6 +357,13 @@ def main():
         #     time.sleep(2)
         #     return
 
+        if pg.sprite.spritecollide(bird, Death_fields, True): # 即死オブジェクト判定
+            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+            score.update(screen)
+            pg.display.update()
+            time.sleep(2)
+            return
+
         if pg.sprite.spritecollide(bird,fields,False):
             cc = pg.sprite.spritecollideany(bird,fields)
             print(cc.rect.center)
@@ -368,13 +375,6 @@ def main():
             MV_MOVE = True
 
         if bird.rect.top < 1 or HEIGHT -1 < bird.rect.bottom: # 上下画面外判定
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
-            score.update(screen)
-            pg.display.update()
-            time.sleep(2)
-            return
-        
-        if len(pg.sprite.spritecollide(bird, Death_fields, True)) != 0: # 即死オブジェクト判定
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
             pg.display.update()
