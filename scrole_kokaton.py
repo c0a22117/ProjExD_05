@@ -374,10 +374,15 @@ def main():
             time.sleep(2)
             return
         
+        if len(pg.sprite.spritecollide(bird, Death_fields, True)) != 0: # 即死オブジェクト判定
+            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+            score.update(screen)
+            pg.display.update()
+            time.sleep(2)
+            return
+        
         if len(pg.sprite.spritecollide(bird,Goal,False)) != 0:
             bird.change_img(6, screen) # こうかとん嬉しいエフェクト
-        if pg.sprite.spritecollide(bird,Death_fields,True):
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
             pg.display.update()
             time.sleep(2)
