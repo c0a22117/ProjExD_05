@@ -152,7 +152,7 @@ class Bomb(pg.sprite.Sprite):
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height/2
         self.speed = 6
@@ -230,7 +230,7 @@ class Enemy(pg.sprite.Sprite):
     敵機に関するクラス
     """
     imgs = [pg.image.load(f"{MAIN_DIR}/fig/alien{i}.png") for i in range(1, 4)]
-    
+
     def __init__(self):
         super().__init__()
         self.image = random.choice(__class__.imgs)
@@ -283,15 +283,15 @@ class Field(pg.sprite.Sprite):
         self.image = pg.Surface((yoko,tate))
         pg.draw.rect(self.image, (255,0,0),(0,0,yoko,tate))
         self.rect = self.image.get_rect()
-        self.rect.centerx = left_L
+        self.rect.left = left_L
         self.rect.centery = top_L
 
     def update(self):
         """
         足場の移動と消去の更新に関する関数
         """
-        if MV_FIELD == True:
-            self.rect.move_ip(-5,0)
+        if MV_FIELD:
+            self.rect.move_ip(-5,0)  #Fieldを動かす
         if self.rect.right < 0:
             self.kill()
 
@@ -309,12 +309,13 @@ def main():
     # exps = pg.sprite.Group()
     # emys = pg.sprite.Group()
     fields = pg.sprite.Group()
-    fields.add(Field())
-    fields.add(Field(0,HEIGHT-20,1000,20))
-    fields.add(Field(1200,HEIGHT-20,200,20))
-    fields.add(Field(1000,HEIGHT/2))
-
     tmr = 0
+
+
+    # fields.add(Field(0,HEIGHT-20,1000,20))
+    # fields.add(Field(1200,HEIGHT-20,200,20))
+    # fields.add(Field(1000,HEIGHT/2))
+
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
@@ -325,6 +326,19 @@ def main():
             #     beams.add(Beam(bird))
 
         screen.blit(bg_img, [0, 0])
+
+        if tmr%100==0:  #約2秒に一回Fieldを呼び出す
+            ran = random.randint(0,1)
+            if ran==0:
+                fields.add(Field(random.randint(WIDTH/2,WIDTH),                   #縦長のfieldを作成
+                                random.randint(0,HEIGHT),
+                                50,
+                                random.randint(100,500)))
+            else:
+                fields.add(Field(random.randint(WIDTH/2,WIDTH),                   #横長のFieldを作成
+                                random.randint(50,HEIGHT-50),
+                                random.randint(100, 500),
+                                50))
 
         # if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
         #     emys.add(Enemy())
@@ -353,9 +367,9 @@ def main():
         if pg.sprite.spritecollide(bird,fields,False):
             cc = pg.sprite.spritecollideany(bird,fields)
             print(cc.rect.center)
-            if cc.rect.centery+20 <= bird.rect.top <= cc.rect.bottom:
+            if cc.rect.centery + cc.rect.height*0.4 <= bird.rect.top <= cc.rect.bottom:
                 bird.rect.move_ip(0,10)
-            if cc.rect.top <= bird.rect.bottom <= cc.rect.centery+20:
+            elif cc.rect.top <= bird.rect.bottom <= cc.rect.centery+20:
                 bird.rect.move_ip(0,-12)
             bird.rect.move_ip(0,-2)
             MV_MOVE = True
