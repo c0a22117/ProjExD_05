@@ -19,6 +19,13 @@ MV_MOVE = False
 SOKO = 0
 COUNT = 0
 
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
+
 
 def check_bound(obj: pg.Rect) -> tuple[bool, bool]:
     """
@@ -235,7 +242,7 @@ class Enemy(pg.sprite.Sprite):
         super().__init__()
         self.image = random.choice(__class__.imgs)
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), 0
+        self.rect.center = 50, 0
         self.vy = +6
         self.bound = random.randint(50, HEIGHT/2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
@@ -296,6 +303,53 @@ class Field(pg.sprite.Sprite):
             self.kill()
 
 
+class ExperienceBar(pg.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pg.Surface((100, 20))
+        self.image.fill(WHITE)
+        self.rect = self.image.get_rect(topleft=(10, 10))
+        self.current_exp = 0
+        self.max_exp = 100
+
+    def update(self):
+        self.image.fill(BLACK)
+        exp_percentage = min(self.current_exp / self.max_exp, 1.0)
+        pg.draw.rect(self.image, BLUE, (0, 0, 100 * exp_percentage, 20))
+
+class Level(pg.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.level = 1
+        self.font = pg.font.Font(None, 36)
+        self.image = self.font.render(f"Level: {self.level}", True, BLACK)
+        self.rect = self.image.get_rect(topleft=(120, 10))
+
+    def update(self):
+        self.image = self.font.render(f"Level: {self.level}", True, BLACK)
+
+
+class Skill(pg.sprite.Sprite):
+    def __init__(self, exp_bar, level):
+        super().__init__()
+        self.exp_bar = exp_bar
+        self.level = level
+        self.image = pg.Surface((50, 50), pg.SRCALPHA)
+        self.rect = self.image.get_rect(topleft=(10, 40))
+        self.show_star = False
+        self.show_star_timer = 0
+    def update(self):
+        self.image.fill((0, 0, 0, 0))  # Make the background transparent
+        if self.level == 1:
+            pg.draw.circle(self.image, GREEN, (25, 25), 20)
+            pg.draw.line(self.image, RED, (10, 10), (40, 40), 5)
+        if self.level >= 2:
+            pg.draw.circle(self.image, GREEN, (25, 25), 20)
+            if self.show_star:
+                pg.draw.circle(self.image, YELLOW, (25, 25), 20)
+                self.show_star_timer -= 1
+            if self.show_star_timer <= 0:
+                self.show_star = False
 def main():
     global MV_FIELD,SOKO,MV_JUMP,MV_MOVE
     pg.display.set_caption("真！こうかとん無双")
@@ -303,16 +357,20 @@ def main():
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
     score = Score()
 
-    bird = Bird(3, (50, 50))
+    bird = Bird(3, (250, 60))
     # bombs = pg.sprite.Group()
     # beams = pg.sprite.Group()
     # exps = pg.sprite.Group()
-    # emys = pg.sprite.Group()
+    emys = pg.sprite.Group()
     fields = pg.sprite.Group()
     fields.add(Field())
     fields.add(Field(0,HEIGHT-20,1000,20))
     fields.add(Field(1200,HEIGHT-20,200,20))
     fields.add(Field(1000,HEIGHT/2))
+    exp_bar = ExperienceBar()
+    level_display = Level()
+    skill = Skill(exp_bar, level_display.level)
+    all_sprites = pg.sprite.Group(exp_bar, level_display,skill)
 
     tmr = 0
     clock = pg.time.Clock()
@@ -321,13 +379,19 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
+            if exp_bar.current_exp >= exp_bar.max_exp:
+                exp_bar.current_exp = 0
+                level_display.level += 1
+                score.value += 100
+                skill.level = level_display.level
             # if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
             #     beams.add(Beam(bird))
 
         screen.blit(bg_img, [0, 0])
 
-        # if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-        #     emys.add(Enemy())
+        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy())
+
 
         # for emy in emys:
         #     if emy.state == "stop" and tmr%emy.interval == 0:
@@ -343,12 +407,10 @@ def main():
         #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
         #     score.value += 1  # 1点アップ
 
-        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
-        #     score.update(screen)
-        #     pg.display.update()
-        #     time.sleep(2)
-        #     return
+        if len(pg.sprite.spritecollide(bird, emys, True)) != 0:
+            exp_bar.current_exp += 100
+            #pg.display.update()
+            #time.sleep(2)
 
         if pg.sprite.spritecollide(bird,fields,False):
             cc = pg.sprite.spritecollideany(bird,fields)
@@ -368,10 +430,10 @@ def main():
             return
 
         bird.update(key_lst, screen)
-        # beams.update()
-        # beams.draw(screen)
-        # emys.update()
-        # emys.draw(screen)
+        #beams.update()
+        #beams.draw(screen)
+        emys.update()
+        emys.draw(screen)
         # bombs.update()
         # bombs.draw(screen)
         # exps.update()
@@ -379,6 +441,8 @@ def main():
         fields.update()
         fields.draw(screen)
         score.update(screen)
+        all_sprites.draw(screen)
+        all_sprites.update()
         pg.display.update()
         MV_FIELD = False
         MV_MOVE = False
