@@ -309,6 +309,8 @@ def main():
     # exps = pg.sprite.Group()
     # emys = pg.sprite.Group()
     fields = pg.sprite.Group()
+    Goal = pg.sprite.Group()
+    Goal.add(Field(2500,0,20,HEIGHT))
     fields.add(Field())
     fields.add(Field(0,HEIGHT-20,1000,20))
     fields.add(Field(1200,HEIGHT-20,200,20))
@@ -366,6 +368,13 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
+        if len(pg.sprite.spritecollide(bird,Goal,False)) != 0:
+            bird.change_img(6, screen) # こうかとん嬉しいエフェクト
+            score.update(screen)
+            pg.display.update()
+            time.sleep(2)
+            return
 
         bird.update(key_lst, screen)
         # beams.update()
@@ -376,6 +385,8 @@ def main():
         # bombs.draw(screen)
         # exps.update()
         # exps.draw(screen)
+        Goal.update()
+        Goal.draw(screen)
         fields.update()
         fields.draw(screen)
         score.update(screen)
