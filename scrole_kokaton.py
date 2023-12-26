@@ -136,20 +136,21 @@ class Bomb(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+    #colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
 
-    def __init__(self, emy: "Enemy", bird: Bird):
+    def __init__(self, emy: "ghost", bird: Bird):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
         引数2 bird：攻撃対象のこうかとん
         """
         super().__init__()
-        rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
-        color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
-        self.image = pg.Surface((2*rad, 2*rad))
-        pg.draw.circle(self.image, color, (rad, rad), rad)
-        self.image.set_colorkey((0, 0, 0))
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/fire.png"), 0, 0.2)  #bombを火の玉に変更
+        #rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
+        #color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
+        #self.image = pg.Surface((2*rad, 2*rad))
+        #pg.draw.circle(self.image, color, (rad, rad), rad)
+        #self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
         self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
@@ -225,39 +226,36 @@ class Explosion(pg.sprite.Sprite):
             self.kill()
 
 
-class Enemy(pg.sprite.Sprite):
+class ghost(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
     #imgs = [pg.image.load(f"{MAIN_DIR}/fig/alien{i}.png") for i in range(1, 4)]
     img = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/ghost.png"), 0, 0.3)
-    def __init__(self):
+    def __init__(self,tmr):
         super().__init__()
-        # self.image = random.choice(__class__.imgs)
         self.image = __class__.img
         self.rect = self.image.get_rect()
         self.rect.center = random.randint(700, WIDTH), 100
         self.vy = +6
-        #self.vx = -6
+        self.vx = -100
         self.bound_x = random.randint(70, WIDTH/2)
         self.bound_y = random.randint(10, HEIGHT/2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        self.interval = random.randint(150, 400)  # 爆弾投下インターバル
+        self.time=tmr
 
-    def update(self):
-        """
-        敵機を速度ベクトルself.vyに基づき移動（降下）させる
-        ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
-        引数 screen：画面Surface
-        """
-        if self.rect.centery > self.bound_y:
+    def update(self,tmr):
+        if self.rect.centery > self.bound_y:    #敵機を速度ベクトルself.vyに基づき移動（降下）させる
             self.vy = 0
-            self.state = "stop"
+            self.state = "stop"                 #ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
         self.rect.centery += self.vy
-        #if self.rect.centery > self.bound_x:
-            #self.vx = 0
-            #self.state = "stop"
-        #self.rect.centery += self.vx
+        if tmr%100 == 0:                   #進行タイミング
+            self.rect.centerx += self.vx
+            if self.rect.centerx < WIDTH/2: #ghostを近づきすぎない判定
+                self.rect.centerx = WIDTH/2
+        if tmr - self.time > 600:  #ghostが3体以上出現したら１体消える
+            self.kill()
 
 
 class Score:
@@ -334,7 +332,7 @@ def main():
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+            emys.add(ghost(tmr))
 
         for emy in emys:
              if emy.state == "stop" and tmr%emy.interval == 0:
@@ -377,7 +375,7 @@ def main():
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
-        emys.update()
+        emys.update(tmr)
         emys.draw(screen)
         bombs.update()
         bombs.draw(screen)
