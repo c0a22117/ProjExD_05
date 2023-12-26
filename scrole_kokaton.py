@@ -10,6 +10,7 @@ from pygame.sprite import AbstractGroup
 
 WIDTH = 1200  # ゲームウィンドウの幅
 HEIGHT = 750  # ゲームウィンドウの高さ
+#screen = pg.display.set_mode((WIDTH, HEIGHT))
 # WIDTH = 700
 # HEIGHT = 500
 MAIN_DIR = os.path.split(os.path.abspath(__file__))[0]
@@ -25,6 +26,9 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
+
+# フォントの設定
+
 
 
 def check_bound(obj: pg.Rect) -> tuple[bool, bool]:
@@ -304,6 +308,9 @@ class Field(pg.sprite.Sprite):
 
 
 class ExperienceBar(pg.sprite.Sprite):
+    """
+    経験値バー
+    """
     def __init__(self):
         super().__init__()
         self.image = pg.Surface((100, 20))
@@ -318,6 +325,9 @@ class ExperienceBar(pg.sprite.Sprite):
         pg.draw.rect(self.image, BLUE, (0, 0, 100 * exp_percentage, 20))
 
 class Level(pg.sprite.Sprite):
+    """
+    レベル
+    """
     def __init__(self):
         super().__init__()
         self.level = 1
@@ -328,38 +338,131 @@ class Level(pg.sprite.Sprite):
     def update(self):
         self.image = self.font.render(f"Level: {self.level}", True, BLACK)
 
-
 class Skill(pg.sprite.Sprite):
+    """
+    スキルアイコンとスキル表示
+    """
     def __init__(self, exp_bar, level):
         super().__init__()
         self.exp_bar = exp_bar
         self.level = level
-        self.image = pg.Surface((50, 50), pg.SRCALPHA)
+        self.image = pg.Surface((150, 50), pg.SRCALPHA)
         self.rect = self.image.get_rect(topleft=(10, 40))
-        self.show_star = False
-        self.show_star_timer = 0
+        self.skill1 = False
+        self.skill2 = False
+        self.skill3 = False
+        self.switch1 = False
+        self.switch2 = False
+        self.switch3 = False
+        self.show_star_timer1 = 50
+        self.show_star_timer2 = 100
+        self.show_star_timer3 = 100
     def update(self):
         self.image.fill((0, 0, 0, 0))  # Make the background transparent
-        if self.level == 1:
+        if self.level >= 1:
             pg.draw.circle(self.image, GREEN, (25, 25), 20)
-            pg.draw.line(self.image, RED, (10, 10), (40, 40), 5)
+            pg.draw.line(self.image, RED, (12, 12), (37, 37), 5)
+            pg.draw.circle(self.image, GREEN, (75, 25), 20)
+            pg.draw.line(self.image, RED, (62, 12), (87, 37), 5)
+            pg.draw.circle(self.image, GREEN, (125, 25), 20)
+            pg.draw.line(self.image, RED, (112, 12), (137, 37), 5)
+
         if self.level >= 2:
             pg.draw.circle(self.image, GREEN, (25, 25), 20)
-            if self.show_star:
+            if self.skill1:
+                self.switch1 = True
                 pg.draw.circle(self.image, YELLOW, (25, 25), 20)
-                self.show_star_timer -= 1
-            if self.show_star_timer <= 0:
-                self.show_star = False
+                self.show_star_timer1 -= 1
+            if self.show_star_timer1 <= 0:
+                self.switch1 = False
+                self.skill1 = False
+                self.show_star_timer1 = 50
+
+        if self.level >= 3:
+            pg.draw.circle(self.image, GREEN, (75, 25), 20)
+            if self.skill2:
+                self.switch2 = True
+                pg.draw.circle(self.image, YELLOW, (75, 25), 20)
+                self.show_star_timer2 -= 1
+            if self.show_star_timer2 <= 0:
+                self.switch2 = False
+                self.skill2 = False
+                self.show_star_timer2 = 100
+
+        if self.level >= 4:
+            pg.draw.circle(self.image, GREEN, (125, 25), 20)
+            if self.skill3:
+                self.switch3 = True
+                pg.draw.circle(self.image, YELLOW, (125, 25), 20)
+                self.show_star_timer3 -= 1
+            if self.show_star_timer3 <= 0:
+                self.switch3 = False
+                self.skill3 = False
+                self.show_star_timer3 = 100
+
+
+class Skill1(pg.sprite.Sprite):
+    """
+    スキル1
+    """
+    def __init__(self):
+        super().__init__()
+        # Load image and resize
+        self.image_path = "ex04/fig/a.jpg"
+        self.original_image = pg.image.load(self.image_path)
+        self.skill1_image = pg.transform.scale(self.original_image, (100, 100))
+        self.skill1_rect = self.skill1_image.get_rect()
+
+        # Set initial position
+        self.start_x = WIDTH // 2 - self.skill1_rect.width // 2
+        self.start_y = 0
+
+        # Set initial speed
+        self.speed = 15
+        self.image = self.skill1_image
+        self.rect = self.image.get_rect()
+        self.rect.x = self.start_x
+        self.rect.y = self.start_y
+
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.y > HEIGHT:
+            self.kill()
+
+class Hp_bar(pg.sprite.Sprite):
+    """
+    HP
+    """
+    def __init__(self):
+        super().__init__()
+
+        self.max_hp = 900
+        self.current_hp = self.max_hp
+        self.image = pg.Surface((self.max_hp, 20))
+        self.rect = self.image.get_rect(topleft=(250, 10))
+        #self.image = pg.Surface((10, 20))
+        #self.rect = self.image.get_rect(topright=(1150, 10))
+
+    def update(self):
+        if self.max_hp > 900:
+            self.max_hp = self.max_hp - (self.max_hp - 900)
+        self.image = pg.Surface((self.max_hp, 20))
+        self.rect = self.image.get_rect(topleft=(250, 10))
+        self.image.fill(GREEN)
+        #self.image = pg.Surface((10, 20))
+        ##self.rect = self.image.get_rect(topright=(1150, 10))
+        #self.image.fill(RED)
+\
+
 def main():
     global MV_FIELD,SOKO,MV_JUMP,MV_MOVE
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
     score = Score()
-
     bird = Bird(3, (250, 60))
     # bombs = pg.sprite.Group()
-    # beams = pg.sprite.Group()
+    beams = pg.sprite.Group()
     # exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     fields = pg.sprite.Group()
@@ -367,15 +470,21 @@ def main():
     fields.add(Field(0,HEIGHT-20,1000,20))
     fields.add(Field(1200,HEIGHT-20,200,20))
     fields.add(Field(1000,HEIGHT/2))
+    skill1_group = pg.sprite.Group()
+
     exp_bar = ExperienceBar()
     level_display = Level()
     skill = Skill(exp_bar, level_display.level)
-    all_sprites = pg.sprite.Group(exp_bar, level_display,skill)
+    hp_bar =Hp_bar()
+    all_sprites = pg.sprite.Group(exp_bar, level_display,skill,hp_bar)
+    #skill1 = pg.sprite.Group()
+
 
     tmr = 0
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
+        screen.blit(bg_img, [0, 0])
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
@@ -384,10 +493,30 @@ def main():
                 level_display.level += 1
                 score.value += 100
                 skill.level = level_display.level
-            # if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-            #     beams.add(Beam(bird))
 
-        screen.blit(bg_img, [0, 0])
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_1:
+                    if skill.level >= 2:
+                        if skill.switch1 != True:
+                            skill1 = Skill1()
+                            skill1_group.add(skill1)
+                            skill.skill1 = True
+                            hp_bar.max_hp -= 50
+
+                elif event.key == pg.K_2:
+                    if skill.level >= 3:
+                        if skill.switch2 != True:
+                            hp_bar.max_hp += 300
+                            skill.skill2 = True
+
+                elif event.key == pg.K_3:
+                    if skill.level >= 4:
+                        if skill.switch3 != True:
+                            beams.add(Beam(bird))
+                            skill.skill3 = True
+
+            #if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+            #beams.add(Beam(bird))
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
@@ -414,7 +543,7 @@ def main():
 
         if pg.sprite.spritecollide(bird,fields,False):
             cc = pg.sprite.spritecollideany(bird,fields)
-            print(cc.rect.center)
+            #print(cc.rect.center)
             if cc.rect.centery+20 <= bird.rect.top <= cc.rect.bottom:
                 bird.rect.move_ip(0,10)
             if cc.rect.top <= bird.rect.bottom <= cc.rect.centery+20:
@@ -429,9 +558,16 @@ def main():
             time.sleep(2)
             return
 
+        if hp_bar.max_hp <= 0:
+            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+            score.update(screen)
+            pg.display.update()
+            time.sleep(2)
+            return
+
         bird.update(key_lst, screen)
-        #beams.update()
-        #beams.draw(screen)
+        beams.update()
+        beams.draw(screen)
         emys.update()
         emys.draw(screen)
         # bombs.update()
@@ -441,6 +577,8 @@ def main():
         fields.update()
         fields.draw(screen)
         score.update(screen)
+        skill1_group.update()
+        skill1_group.draw(screen)
         all_sprites.draw(screen)
         all_sprites.update()
         pg.display.update()
