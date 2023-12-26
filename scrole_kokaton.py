@@ -148,14 +148,14 @@ class Bomb(pg.sprite.Sprite):
     """
     #colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
 
-    def __init__(self, emy: "ghost", bird: Bird):
+    def __init__(self, emy: "Ghost", bird: Bird):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
         引数2 bird：攻撃対象のこうかとん
         """
         super().__init__()
-        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/fire.png"), 0, 0.2)  #bombを火の玉に変更
+        self.image = pg.transform.rotozoom(pg.image.load(f"{MAIN_DIR}/fig/fire.png"), 0, 0.1)  #bombを火の玉に変更
         #rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
         #color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
         #self.image = pg.Surface((2*rad, 2*rad))
