@@ -150,7 +150,7 @@ class Bomb(pg.sprite.Sprite):
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height/2
         self.speed = 6
@@ -228,7 +228,7 @@ class Enemy(pg.sprite.Sprite):
     敵機に関するクラス
     """
     imgs = [pg.image.load(f"{MAIN_DIR}/fig/alien{i}.png") for i in range(1, 4)]
-    
+
     def __init__(self):
         super().__init__()
         self.image = random.choice(__class__.imgs)
@@ -269,12 +269,11 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
-
 class Field(pg.sprite.Sprite):
     """
     足場に関するクラス
     """
-    def __init__(self,left_L = 100,top_L = HEIGHT-50,yoko = 50,tate = 50, color = (0,0,255)):
+    def __init__(self, left_L=100, top_L=HEIGHT-50, yoko=50, tate=50,color = (0,0,255)):
         """
         足場のsurfaceを作る関数
         引数：top_L(左上地点x座標),left_L(左上地点y座標),yoko(長さ),tate(高さ)
@@ -282,19 +281,19 @@ class Field(pg.sprite.Sprite):
         super().__init__()
         self.left = left_L
         self.top = top_L
-        self.image = pg.Surface((yoko,tate))
-        pg.draw.rect(self.image, color,(0,0,yoko,tate))
+        self.image = pg.Surface((yoko, tate))
+        pg.draw.rect(self.image, color, (0, 0, yoko, tate))
         self.rect = self.image.get_rect()
-        self.rect.centerx = left_L 
+        self.rect.left = left_L
         self.rect.centery = top_L
 
     def update(self):
         """
         足場の移動と消去の更新に関する関数
         """
-        if MV_FIELD == True: # フィールドが動いているならオブジェクトを移動させる
-            self.rect.move_ip(-5,0)
-        if self.rect.right < 0: # 画面外に出たら消去
+        if MV_FIELD:
+            self.rect.move_ip(-5,0)  #Fieldを動かす
+        if self.rect.right < 0:
             self.kill()
 
 
@@ -311,6 +310,7 @@ def main():
     # exps = pg.sprite.Group()
     # emys = pg.sprite.Group()
     fields = pg.sprite.Group()
+
     Goal = pg.sprite.Group()
     Goal.add(Field(2500,0,20,HEIGHT))
     fields.add(Field())
@@ -320,8 +320,8 @@ def main():
     fields.add(Field(0,HEIGHT-20,1000,20))
     fields.add(Field(1200,HEIGHT-20,200,20))
     fields.add(Field(1000,HEIGHT/2))
-
     tmr = 0
+
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
@@ -332,6 +332,19 @@ def main():
             #     beams.add(Beam(bird))
 
         screen.blit(bg_img, [0, 0])
+
+        if tmr % 500 == 0: #10秒に1回Fieldを出す
+            random_field = random.randint(0, 1)
+            if random_field == 0:
+                fields.add(Field(random.randint(WIDTH / 2, WIDTH),  #縦長のfieldを作成
+                                  random.randint(200, HEIGHT),
+                                  50,
+                                  random.randint(200, 500)))
+            else:
+                fields.add(Field(random.randint(WIDTH / 2, WIDTH),   #横長のFieldを作成
+                                  random.randint(200, HEIGHT - 50),
+                                  random.randint(200, 500),
+                                  50))
 
         # if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
         #     emys.add(Enemy())
@@ -366,12 +379,12 @@ def main():
 
         if pg.sprite.spritecollide(bird,fields,False):
             cc = pg.sprite.spritecollideany(bird,fields)
-            print(cc.rect.center)
-            if cc.rect.centery+20 <= bird.rect.top <= cc.rect.bottom:#フィールドオブジェクトの上面判定
-                bird.rect.move_ip(0,10) # 物体に対する反発
-            if cc.rect.top <= bird.rect.bottom <= cc.rect.centery+20:#フィールドオブジェクトの下面判定
-                bird.rect.move_ip(0,-12) # 物体に対する反発
-            bird.rect.move_ip(0,-2) # 重力付与
+            #print(cc.rect.center)
+            if cc.rect.centery + cc.rect.height*0.4 <= bird.rect.top <= cc.rect.bottom:
+                bird.rect.move_ip(0,10)
+            elif cc.rect.top <= bird.rect.bottom <= cc.rect.centery+20:
+                bird.rect.move_ip(0,-12)
+            bird.rect.move_ip(0,-2)
             MV_MOVE = True
 
         if bird.rect.top < 1 or HEIGHT -1 < bird.rect.bottom: # 上下画面外判定
@@ -380,7 +393,7 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
-        
+
         if len(pg.sprite.spritecollide(bird,Goal,False)) != 0:
             bird.change_img(6, screen) # こうかとん嬉しいエフェクト
             score.update(screen)
