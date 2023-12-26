@@ -10,6 +10,7 @@ from pygame.sprite import AbstractGroup
 
 WIDTH = 1200  # ゲームウィンドウの幅
 HEIGHT = 750  # ゲームウィンドウの高さ
+GOAL = 4800
 # WIDTH = 700
 # HEIGHT = 500
 MAIN_DIR = os.path.split(os.path.abspath(__file__))[0]
@@ -253,8 +254,7 @@ class Enemy(pg.sprite.Sprite):
 
 class Score:
     """
-    打ち落とした爆弾，敵機の数をスコアとして表示するクラス
-    爆弾：1点
+    敵機の数をスコアとして表示するクラス
     敵機：10点
     """
     def __init__(self):
@@ -268,6 +268,29 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
+
+
+class Coin(pg.sprite.Sprite):
+    """
+    コインに関するクラス
+    """
+    def __init__(self,x, y):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.image = pg.Surface((30,30))
+        self.rect = self.image.get_rect(center=(x, y))
+        pg.draw.circle(self.image, (255,255,0),(15,15), 15)  #半径15の黄色のコイン
+        self.image.set_colorkey((0, 0, 0))
+        
+    def update(self):
+        """
+        コインと消去の更新に関する関数
+        """
+        if MV_FIELD == True:
+            self.rect.move_ip(-5,0)
+        if self.rect.right < 0:
+            self.kill()
 
 
 class Field(pg.sprite.Sprite):
@@ -304,15 +327,20 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
     score = Score()
-
     bird = Bird(3, (50, 50))
     # bombs = pg.sprite.Group()
     # beams = pg.sprite.Group()
     # exps = pg.sprite.Group()
-    # emys = pg.sprite.Group()
+    #emys = pg.sprite.Group()
     fields = pg.sprite.Group()
     Goal = pg.sprite.Group()
     Goal.add(Field(2500,0,20,HEIGHT))
+    coins = pg.sprite.Group()
+    for i in range(5):
+        coins.add(Coin(random.randint(30, WIDTH), random.randint(50, HEIGHT*0.8)))  #コインの表示
+        coins.add(Coin(random.randint(WIDTH, WIDTH*2), random.randint(50, HEIGHT*0.8)))  #スライドさせたときにも表示される
+        coins.add(Coin(random.randint(WIDTH*2, WIDTH*3), random.randint(50, HEIGHT*0.8)))
+        coins.add(Coin(random.randint(WIDTH*3, GOAL), random.randint(50, HEIGHT*0.8)))
     fields.add(Field())
     Death_fields = pg.sprite.Group()
     Death_fields.add(Field(100,HEIGHT-50,50,50,(255,0,0)))
@@ -320,6 +348,8 @@ def main():
     fields.add(Field(0,HEIGHT-20,1000,20))
     fields.add(Field(1200,HEIGHT-20,200,20))
     fields.add(Field(1000,HEIGHT/2))
+
+
 
     tmr = 0
     clock = pg.time.Clock()
@@ -333,7 +363,7 @@ def main():
 
         screen.blit(bg_img, [0, 0])
 
-        # if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+        #if tmr%100 == 0:  # 200フレームに1回，敵機を出現させる
         #     emys.add(Enemy())
 
         # for emy in emys:
@@ -349,13 +379,19 @@ def main():
         # for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
         #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
         #     score.value += 1  # 1点アップ
+             
+        if pg.sprite.spritecollide(bird, coins, True): 
+             score.value += 100     
 
-        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+               
+
+        #if len(pg.sprite.spritecollide(bird, emys, True)) != 0:
         #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
-        #     score.update(screen)
+             #score.update(screen)
+             #score.value += 100  # 1点アップ
         #     pg.display.update()
         #     time.sleep(2)
-        #     return
+        
 
         if pg.sprite.spritecollide(bird, Death_fields, True): # 即死オブジェクト判定
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
@@ -391,8 +427,8 @@ def main():
         bird.update(key_lst, screen)
         # beams.update()
         # beams.draw(screen)
-        # emys.update()
-        # emys.draw(screen)
+        #emys.update()
+        #emys.draw(screen)
         # bombs.update()
         # bombs.draw(screen)
         # exps.update()
@@ -403,6 +439,8 @@ def main():
         fields.draw(screen)
         Death_fields.update()
         Death_fields.draw(screen)
+        coins.update()
+        coins.draw(screen)
         score.update(screen)
         pg.display.update()
         MV_FIELD = False
