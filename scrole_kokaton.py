@@ -271,25 +271,21 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
-
 class Field(pg.sprite.Sprite):
     """
     足場に関するクラス
     """
-    def __init__(self,left_L = 100,top_L = HEIGHT-50,yoko = 50,tate = 50):
+    def __init__(self, left_L=100, top_L=HEIGHT-50, yoko=50, tate=50):
         super().__init__()
         self.left = left_L
         self.top = top_L
-        self.image = pg.Surface((yoko,tate))
-        pg.draw.rect(self.image, (255,0,0),(0,0,yoko,tate))
+        self.image = pg.Surface((yoko, tate))
+        pg.draw.rect(self.image, (255, 0, 0), (0, 0, yoko, tate))
         self.rect = self.image.get_rect()
         self.rect.left = left_L
         self.rect.centery = top_L
 
     def update(self):
-        """
-        足場の移動と消去の更新に関する関数
-        """
         if MV_FIELD:
             self.rect.move_ip(-5,0)  #Fieldを動かす
         if self.rect.right < 0:
@@ -327,18 +323,18 @@ def main():
 
         screen.blit(bg_img, [0, 0])
 
-        if tmr%100==0:  #約2秒に一回Fieldを呼び出す
-            ran = random.randint(0,1)
-            if ran==0:
-                fields.add(Field(random.randint(WIDTH/2,WIDTH),                   #縦長のfieldを作成
-                                random.randint(0,HEIGHT),
-                                50,
-                                random.randint(100,500)))
+        if tmr % 500 == 0: #10秒に1回Fieldを出す
+            random_field = random.randint(0, 1)
+            if random_field == 0:
+                fields.add(Field(random.randint(WIDTH / 2, WIDTH),  #縦長のfieldを作成
+                                  random.randint(200, HEIGHT),
+                                  50,
+                                  random.randint(200, 500)))
             else:
-                fields.add(Field(random.randint(WIDTH/2,WIDTH),                   #横長のFieldを作成
-                                random.randint(50,HEIGHT-50),
-                                random.randint(100, 500),
-                                50))
+                fields.add(Field(random.randint(WIDTH / 2, WIDTH),   #横長のFieldを作成
+                                  random.randint(200, HEIGHT - 50),
+                                  random.randint(200, 500),
+                                  50))
 
         # if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
         #     emys.add(Enemy())
